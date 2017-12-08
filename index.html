@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Rock-Paper-Scissors</title>
+
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css">
+  	<link rel="stylesheet" type="text/css" href="assets/css/styles.css">
+
+</head>
+
+<div id="wrapper" class="container">
+
+<div id="title"><h1>Rock-Paper-Scissors</h1></div>
+
+<div id="header">
+	<form id="start-form">
+    	<div class="form-group">
+     		<!-- <label for="player-name">Your Name</label> -->
+     		<input class="form-control" id="player-name" type="text" placeholder="Name">
+    	</div>
+	    <button class="btn btn-primary" id="btn-start">START</button>
+  </form>
+
+  <div id="greeting"></div>
+  <div id="game-info"></div>
+	
+</div>
+
+<div id="game-field" class="container">
+	<div class="row justify-content-center">
+		<div class="col-4">
+			<!-- player name, r p s chice buttons, statistics 
+				frame color(turn indication) -->
+			<div class="game-box" id="player1"></div>
+		</div>
+		<div class="col-4">
+			<div class="game-box" id="game-result"></div>
+		</div>
+		<div class="col-4">
+			<!-- player name, r p s chice buttons, statistics 
+				frame color(turn indication) -->
+			<div class="game-box" id="player2"></div>
+		</div>
+	</div>
+</div>
+
+<div id="chat-field">
+	<form>
+		<div class="form-group">
+			<input type="textarea" id="chat-history" name="chat" value="lalala" cols="50" rows="5" readonly>
+		</div>
+    	<div class="form-group">
+     		<!-- <label for="msg-text">Your Message</label> -->
+     		<input class="form-control" id="msg-text" type="text">
+    	</div>
+	    <button class="btn btn-primary" id="btn-send" type="submit">Send</button>
+  </form>
+
+</div>
+
+</div> <!-- wrapper end -->
+
+<body>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+<script src="https://www.gstatic.com/firebasejs/4.7.0/firebase.js"></script>
+
+<script src="assets/js/rps.js"></script>
+
+</body>
+</html>

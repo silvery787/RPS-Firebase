@@ -1,0 +1,40 @@
+input#player-name {
+	width: 500px;
+}
+
+div#header {
+	height: 120px;
+	border: 1px solid black;
+} 
+
+div#game-field {
+	height: 200px;
+	/*border: 1px solid black;*/
+}
+
+div#chat-field {
+	height: 200px;
+	border: 1px solid black;
+}
+
+div#chat {
+	width: 70%;
+	height: 150px;
+	margin-right: auto;
+	margin-left: auto;
+
+	border: 1px solid black;
+}
+
+input#chat-history {
+	grid-row: 5;
+	grid-column: 50;
+}
+
+.game-box {
+	width: 100px;
+	height: 100px;
+	display: inline-block;
+	border: 1px solid black;
+
+}

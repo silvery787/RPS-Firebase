@@ -1,4 +1,4 @@
-  
+const SCORE_TIMEOUT = 5000;  
 // Initialize Firebase
 var config = {
   apiKey: "AIzaSyAxWKmqUYTP6iksBnYtqUVZzuvSLuzMNL4",
@@ -14,9 +14,6 @@ var db = firebase.database();
 
 var room_id = 0;
 
-// var opponent_id = 0;
-// var opponent_choice = 0;
-
 var player = {
   id : 0, 
   name : "",
@@ -30,23 +27,18 @@ var opponent = {
   name : "",
   wins : 0,
   looses : 0,
-  choice : 0  
+  choice : 0
 };
-
-//var player_turn = 0;
-var game_started = false;
-var game_wait_time_start = null;
 
 //=================================== 
 
 function drawMyChoiceButtons(){
+  
+  drawPlayersInfo();
 
   $("#player1").empty();
   $("#player2").empty();
   $("#game-result").empty();
-  // var myName = $("<span>");
-  // myName.text(player.name);
-  // $("#player1").append(myName);
 
   //draw r p s
   var rock_btn = $("<button>");
@@ -69,7 +61,13 @@ function drawMyChoiceButtons(){
 
 }
 
-function drawBoxes(){
+function drawPlayersInfo(){
+
+  $("#p1name").text(player.name);
+  $("#p1score").text("wins: "+player.wins+" | looses: "+player.looses);
+
+  $("#p2name").text(opponent.name);
+  $("#p2score").text("wins: "+opponent.wins+" | looses: "+opponent.looses);
 
 }
 
@@ -95,10 +93,10 @@ $("#player1").on("click", ".choice_btn", function(){
   opponent.choice = 0;
 
   db.ref(room_id+'/players/'+opponent.id+'/choice').on('value', function(snapshot){
-  //db.ref(room_id+'/players/'+opponent.id).on('value', function(snapshot){
-    console.log("opponent : "+opponent.id);
+
+    //console.log("opponent : "+opponent.id);
     opponent.choice = snapshot.val();
-    console.log("opponents choice: "+ opponent.choice);
+    //console.log("opponents choice: "+ opponent.choice);
 
     if( opponent.choice && player.choice ){
 
@@ -118,14 +116,11 @@ $("#player1").on("click", ".choice_btn", function(){
           $("#game-result").text("You Win!");
           player.wins++;
           opponent.looses++;
-          console.log("WIN");
       }
       else{
         $("#game-result").text("You Loose!");
         player.looses++;
         opponent.wins++;
-
-        console.log("LOOSE");
       } 
 
       opponent.choice = 0;
@@ -136,8 +131,7 @@ $("#player1").on("click", ".choice_btn", function(){
       db.ref(room_id+'/players/'+player.id+'/wins').set(player.wins);
       db.ref(room_id+'/players/'+player.id+'/looses').set(player.looses);
 
-      //redraw buttons in 5 sec?
-      setTimeout( drawMyChoiceButtons , 10000 );
+      setTimeout( drawMyChoiceButtons , SCORE_TIMEOUT );
       
     }
   }, 
@@ -159,7 +153,10 @@ $("#btn-start").on("click", function(){
   game_started = 1;
 
   $("#start-form").hide();
+  $("#greeting").text("Hi "+player.name);
 
+  $("#p1name").text(player.name);
+  $("#p1score").text("wins: "+player.wins+" | looses: "+player.looses);
 
   db.ref('waiting').once('value', function(snapshot) {
     var roomW = snapshot.val();
@@ -184,7 +181,6 @@ $("#btn-start").on("click", function(){
       }
       console.log(room_id);
       if(room_id!=0){// if opponent found
-        console.log("111111");
         //create new room
         var tmp_r = {};
         tmp_r[room_id] = {
@@ -205,6 +201,24 @@ $("#btn-start").on("click", function(){
         tmp_p = {};
         tmp_p[player.id] = player;
         db.ref(room_id+'/players').update(tmp_p);
+
+        // //listen for opponent id in room ==new
+        // db.ref(room_id+'/players/'+opponent.id).on('value', function(snap){
+        //   console.log("getting players : "+snap.val());
+        //   if(snap.val()){
+        //     for(var p_id in snap.val()){
+        //       if(p_id != player.id ){
+        //         opponent = snap.val()[p_id];
+        //         break;
+        //         //todo: stop listening?
+        //       }
+        //     }
+        //   }
+        //   drawPlayersInfo();
+        // },
+        // function(error){
+        //   console.log(error.code);
+        // });
 
       }
       else{
@@ -230,23 +244,26 @@ $("#btn-start").on("click", function(){
 
       if(snapshot.val()){
 
-        var tmp_p = {};
-        tmp_p[player.id] = player;
+        var player_obj = {};
+        player_obj[player.id] = player;
         room_id = snapshot.val();
-        db.ref(room_id+'/players').update(tmp_p);
+        db.ref(room_id+'/players').update(player_obj);
 
         db.ref(room_id+'/players').on('value', function(snap){
           console.log("getting players : "+snap.val());
           if(snap.val()){
             for(var p_id in snap.val()){
               if(p_id != player.id ){
-                opponent.id = p_id;
-                opponent.choice = snap.val()[p_id].choice;
+                opponent = snap.val()[p_id];
                 break;
+                //todo: stop listening?
               }
             }
-            console.log("opponent: "+ opponent.id);
-            console.log("opponent choice: "+ opponent.choice);
+            drawPlayersInfo();
+            // console.log("opponent: "+ opponent.id);
+            // console.log("opponent name: "+ opponent.name);
+            // console.log("opponent choice: "+ opponent.choice);
+
           }
         });
 

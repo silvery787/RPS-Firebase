@@ -32,8 +32,14 @@ input#chat-history {
 }
 
 .game-box {
-	width: 100px;
-	height: 100px;
+	width: 150px;
+	height: 150px;
+	display: inline-block;
+	border: 1px solid black;
+}
+.game-result {
+	width: 150px;
+	height: 200px;
 	display: inline-block;
 	border: 1px solid black;
 

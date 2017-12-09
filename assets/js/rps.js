@@ -19,7 +19,8 @@ var player = {
   name : "",
   wins : 0,
   looses : 0,
-  choice : 0
+  choice : 0,
+  status : "online"
 }
 
 var opponent = {
@@ -27,10 +28,19 @@ var opponent = {
   name : "",
   wins : 0,
   looses : 0,
-  choice : 0
+  choice : 0,
+  status : null
 };
 
 //=================================== 
+function clearButtons(){
+  $("#player1").empty();
+  $("#player2").empty();
+  $("#game-result").empty(); 
+  
+  $("#p2name").text("disconnected");
+  $("#p2score").text();
+}
 
 function drawMyChoiceButtons(){
   
@@ -78,6 +88,71 @@ function getTextForChoice( choice ){
     case 's' : return "=Scissors=";
   }
 }
+
+function enterWaitList(){
+
+  db.ref('waiting').once('value', function(snapshot) {
+    var roomW = snapshot.val();
+    console.log(roomW);
+    //if doesn't exist
+    if( !roomW ){
+      console.log("whaiting room: null");
+      var tmp_p = {};
+      tmp_p[player.id] = 0;
+      db.ref('waiting').set(tmp_p);
+    }
+    else {
+      //waiting room exists
+      for( var pl_id in roomW ){
+        console.log(pl_id, player.id);
+        if(pl_id != player.id && roomW[pl_id]==0 ){
+          //other waiting player found -> generate room_id
+          opponent.id = pl_id;
+          room_id = "room_"+Math.ceil(Math.random()*10000);
+          break;
+        }
+      }
+      console.log(room_id);
+      if(room_id!=0){// if opponent was found
+        //create new room
+        var tmp_r = {};
+        tmp_r[room_id] = {
+          players : 0,
+          chat : ""
+        };
+        db.ref().update(tmp_r);
+
+        //add room_id to opponent's id
+        db.ref('waiting/' + opponent.id).set(room_id);
+
+        //add yourself to waiting with the same room_id
+        var tmp_p = {};
+        tmp_p[player.id] = room_id;
+        db.ref('waiting').update(tmp_p);
+
+        //add yourself to the new room
+        tmp_p = {};
+        tmp_p[player.id] = player;
+        db.ref(room_id+'/players').update(tmp_p);
+
+      }
+      else{
+        //opponent.id is undefined yet
+        //add yourself to waiting room with room value == 0
+        var tmp_p = {};
+        tmp_p[player.id] = 0;
+        //db.ref('waiting').update(tmp_p);
+        db.ref('waiting').update(tmp_p);
+
+      }
+      
+    }
+  },
+  function(error){
+    console.log("error: "+error.code);
+  });
+}
+//=========================
 
 $("#player1").on("click", ".choice_btn", function(){
 
@@ -158,83 +233,11 @@ $("#btn-start").on("click", function(){
   $("#p1name").text(player.name);
   $("#p1score").text("wins: "+player.wins+" | looses: "+player.looses);
 
-  db.ref('waiting').once('value', function(snapshot) {
-    var roomW = snapshot.val();
-    console.log(roomW);
-    //if doesn't exist
-    if( !roomW ){
-      console.log("whaiting room: null");
-      var tmp_p = {};
-      tmp_p[player.id] = 0;
-      db.ref('waiting').set(tmp_p);
-    }
-    else {
-      //waiting room exists
-      for( var pl_id in roomW ){
-        console.log(pl_id, player.id);
-        if(pl_id != player.id && roomW[pl_id]==0 ){
-          //generate room_id
-          opponent.id = pl_id;
-          room_id = "room_"+Math.ceil(Math.random()*10000);
-          break;
-        }
-      }
-      console.log(room_id);
-      if(room_id!=0){// if opponent found
-        //create new room
-        var tmp_r = {};
-        tmp_r[room_id] = {
-          players : 0,
-          chat : ""
-        };
-        db.ref().update(tmp_r);
+  var waitRef = firebase.database().ref('waiting/'+player.id);
+  waitRef.onDisconnect().remove();
 
-        //add room_id to opponent's id
-        db.ref('waiting/' + opponent.id).set(room_id);
-
-        //add yourself to waiting with the same room_id
-        var tmp_p = {};
-        tmp_p[player.id] = room_id;
-        db.ref('waiting').update(tmp_p);
-
-        //add yourself to the new room
-        tmp_p = {};
-        tmp_p[player.id] = player;
-        db.ref(room_id+'/players').update(tmp_p);
-
-        // //listen for opponent id in room ==new
-        // db.ref(room_id+'/players/'+opponent.id).on('value', function(snap){
-        //   console.log("getting players : "+snap.val());
-        //   if(snap.val()){
-        //     for(var p_id in snap.val()){
-        //       if(p_id != player.id ){
-        //         opponent = snap.val()[p_id];
-        //         break;
-        //         //todo: stop listening?
-        //       }
-        //     }
-        //   }
-        //   drawPlayersInfo();
-        // },
-        // function(error){
-        //   console.log(error.code);
-        // });
-
-      }
-      else{
-        //opponent_id undefined in this case yet
-        //add yourself to waiting room with room value == 0
-        var tmp_p = {};
-        tmp_p[player.id] = 0;
-        db.ref('waiting').update(tmp_p);
-
-      }
-      
-    }
-  },
-  function(error){
-    console.log("error: "+error.code);
-  });
+  //check waiting room for players with 0 value
+  enterWaitList();
 
   //listener for room_id changes for self-id in waiting room
   db.ref('waiting/'+player.id).on('value', function(snapshot) {
@@ -260,10 +263,23 @@ $("#btn-start").on("click", function(){
               }
             }
             drawPlayersInfo();
-            // console.log("opponent: "+ opponent.id);
-            // console.log("opponent name: "+ opponent.name);
-            // console.log("opponent choice: "+ opponent.choice);
 
+            //if player disconncted
+            var playerRef = db.ref(room_id+'/players/'+player.id);
+            playerRef.onDisconnect().remove();
+
+            //if opponent disconnected
+            db.ref(room_id+'/players/'+opponent.id).on('child_removed', function(event){
+                  db.ref(room_id).remove();
+                  player.choice = 0;
+                  opponent = {};
+                  room_id = 0;
+                  clearButtons();
+                  //todo : check for other 0s in wroom
+                  //enterWaitList();
+                  db.ref('waiting/'+player.id).set(0);
+
+            });
           }
         });
 
@@ -281,12 +297,3 @@ $("#btn-start").on("click", function(){
 $("#btn-send").on("click", function(){
   //send chat 
 });
-//code examples
-
- //    database.ref().set({
- //      highBidder: bidderName,
- //      highPrice: bidderPrice
- //    });
-
- // if (snapshot.child("highBidder").exists() && snapshot.child("highPrice").exists()) {
- //  snapshot.val() -> jObj

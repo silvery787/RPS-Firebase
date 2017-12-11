@@ -1,4 +1,13 @@
-const SCORE_TIMEOUT = 5000;  
+const SCORE_TIMEOUT = 5000;
+const MAX_TIMER = 5;
+
+var rps_images = {
+  r : 'assets/images/earth.jpg', // rock=earth
+  p : 'assets/images/fire.jpg', //paper=fire
+  s : 'assets/images/water.jpg', //scissors=water
+  t : 'assets/images/question1.png' // out of time
+};
+
 // Initialize Firebase
 var config = {
   apiKey: "AIzaSyAxWKmqUYTP6iksBnYtqUVZzuvSLuzMNL4",
@@ -30,8 +39,78 @@ var opponent = {
   choice : 0
 };
 
+
+var intervalId;
+var clockRunning = false;
+var game_timer = {
+  time: MAX_TIMER,
+
+  start: function() {
+    game_timer.time = MAX_TIMER;
+    if (!clockRunning) {
+        intervalId = setInterval(game_timer.count, 1000);
+        clockRunning = true;
+    }
+  },
+
+  stop: function() {
+    clearInterval(intervalId);
+    clockRunning = false;
+  },
+
+  count: function() {
+
+    $("#game-result").text(game_timer.time);
+
+    if(game_timer.time == 0){
+
+      game_timer.stop();
+      proccessNotInTime(); 
+    }
+    else{
+        game_timer.time--;
+    }
+  }
+ };
+
+function proccessNotInTime(){
+
+  player.choice = "t";
+
+  $("#player1").empty();
+  var p1text = getTextForChoice( player.choice );
+  $("#player1").html(p1text);
+
+  db.ref(room_id+'/players/'+player.id).update({ choice: player.choice });
+
+  var choiceRef = db.ref(room_id+'/players/'+opponent.id+'/choice');
+  choiceRef.on('value', function(snapshot){
+
+    opponent.choice = snapshot.val();
+    if( opponent.choice && player.choice ){
+      var p2text = getTextForChoice( opponent.choice );
+      $("#player2").html(p2text);
+
+      $("#game-result").html("You Loose!");
+      player.looses++; 
+
+      opponent.choice = 0;
+      player.choice = 0;
+
+      db.ref(room_id+'/players/'+player.id).set(player);
+
+      setTimeout( drawChoiceButtons , SCORE_TIMEOUT );
+      
+      choiceRef.off();
+    }
+  });
+
+}
 //=================================== 
+
 function clearButtons(){
+  
+  game_timer.stop();
 
   $("#player1").empty();
   $("#player2").empty();
@@ -42,7 +121,7 @@ function clearButtons(){
 
 }
 
-function drawMyChoiceButtons(){
+function drawChoiceButtons(){
   
   if(player.id && opponent.id){
     drawPlayersInfo();
@@ -52,23 +131,35 @@ function drawMyChoiceButtons(){
     $("#game-result").empty();
 
     //draw r p s
-    var rock_btn = $("<button>");
+    var rock_btn = $("<img>");
+    // var rock_btn = $("<button>");
     rock_btn.addClass("choice_btn");
     rock_btn.attr("data", "r");
-    rock_btn.text("=Rock=");
+    // rock_btn.text("=Rock=");
+    rock_btn.attr("src", rps_images.r);
+    rock_btn.attr("alt","Earth (rock)");
     $("#player1").append(rock_btn);
 
-    var paper_btn = $("<button>");
+    var paper_btn = $("<img>");
+    // var paper_btn = $("<button>");
     paper_btn.addClass("choice_btn");
     paper_btn.attr("data", "p");
-    paper_btn.text("=Paper=");
+    // paper_btn.text("=Paper=");
+    paper_btn.attr("src", rps_images.p);
+    paper_btn.attr("alt","Fire (paper)");    
     $("#player1").append(paper_btn);
 
-    var scissors_btn = $("<button>");
+    var scissors_btn = $("<img>");
+    // var scissors_btn = $("<button>");
     scissors_btn.addClass("choice_btn");
     scissors_btn.attr("data", "s");
-    scissors_btn.text("=Scissors=");
+    // scissors_btn.text("=Scissors=");
+    scissors_btn.attr("src", rps_images.s);
+    scissors_btn.attr("alt","Water (scissors)");
     $("#player1").append(scissors_btn);
+
+    game_timer.start();
+
   }
   else {
     clearButtons();
@@ -86,21 +177,29 @@ function drawPlayersInfo(){
 }
 
 function getTextForChoice( choice ){
+  // switch(choice){
+  //   case 'r' : return "=Rock=";
+  //   case 'p' : return "=Paper=";
+  //   case 's' : return "=Scissors=";
+  //   case 't' : return "=No Answer=";
+  // }
   switch(choice){
-    case 'r' : return "=Rock=";
-    case 'p' : return "=Paper=";
-    case 's' : return "=Scissors=";
+    case 'r' : return "<img src='" + rps_images.r +"' alt='Earth (rock)'>";
+    case 'p' : return "<img src='" + rps_images.p +"' alt='Fire (paper)'>";
+    case 's' : return "<img src='" + rps_images.s +"' alt='Water (scissors)'>";
+    // case 't' : return "<img src='" + rps_images.t +"' alt='Out of Time'>";
+    case 't' : return "<p class='box-text'>Out of Time</p>";
+
   }
 }
+// =============================
 
 function enterWaitList(){
 
 //  db.ref('waiting').once('value', function(snapshot) {
   var query = db.ref('waiting').orderByKey();
   query.once('value').then( function(snapshot) {
-    //var roomW = snapshot.val();
-    //console.log(roomW);
-    //if doesn't exist
+    //if waiting doesn't exist
     if( !snapshot.exists()){
       db.ref('waiting/'+player.id).set(0);
     }
@@ -126,9 +225,6 @@ function enterWaitList(){
           players: 0,
           chat : ""
         });
-
-        //add yourself to the new room
-        //db.ref(room_id+'/players/'+player.id).set(player);
 
         //add room_id to opponent's id in waiting room
         db.ref('waiting/' + opponent.id).set(room_id);
@@ -163,68 +259,46 @@ function processOpponentDisconnect(){
     clearButtons();
 
     enterWaitList();
-  //   var query = db.ref("waiting").orderByKey();
-  //   query.once("value").then(function(parentSnapshot) {
-  //     parentSnapshot.forEach(function(childSnapshot) {
-  //       var id = childSnapshot.key;
-  //       var val = childSnapshot.val();
-  //       if( id != player.id && val == 0 ){
-  //         opponent.id = id;
-  //         room_id = "room_"+Math.ceil(Math.random()*10000);
-  //         return false;
-  //       }
-  //       if(room_id) return false;
-  //       // return true;
-  //     });
 
-  //     console.log("Room = "+room_id);
-  //     if(room_id!=0){// if opponent was found
-  //       //create new room
-  //       db.ref(room_id).set({
-  //         players: 0,
-  //         chat : ""
-  //       });
-  //       db.ref('waiting/' + opponent.id).set(room_id);
-  //       db.ref('waiting/'+ player.id).set(room_id);
-  //       //db.ref(room_id+'/players/'+player.id).set(player);
-  //     }
-  //     else{
-  //       db.ref('waiting/'+player.id).set(0);
-
-  //     }
-  //     query.off(); 
-  //   });
   });
 }
 //=========== CHOICE CLICK ==============
 
 $("#player1").on("click", ".choice_btn", function(){
 
+  game_timer.stop();
+
   player.choice = $(this).attr("data");
   console.log("p1-choice: "+player.choice);
   //draw/show a picture of choice 
   $("#player1").empty();
   var p1text = getTextForChoice( player.choice );
-  $("#player1").text(p1text);
+  // $("#player1").text(p1text);
+  $("#player1").html(p1text);
   //save choice to db
   db.ref(room_id+'/players/'+player.id).update({ choice: player.choice });
 
   opponent.choice = 0;
 
-  db.ref(room_id+'/players/'+opponent.id+'/choice').on('value', function(snapshot){
+  var choiceRef = db.ref(room_id+'/players/'+opponent.id+'/choice');
+  choiceRef.on('value', function(snapshot){
 
-    //console.log("opponent : "+opponent.id);
     opponent.choice = snapshot.val();
-    //console.log("opponents choice: "+ opponent.choice);
 
     if( opponent.choice && player.choice ){
 
-      // console.log("p2-choice: "+ opponent.choice);
       var p2text = getTextForChoice( opponent.choice );
-      $("#player2").text(p2text);
+      // $("#player2").text(p2text);
+      $("#player2").html(p2text);
 
       //check who is the winner
-      if (player.choice == opponent.choice) {
+      if( opponent.choice == "t" && player.choice!= "t" ){//opponent didn't answer in time
+        $("#game-result").text("You Win!");
+          player.wins++;
+          opponent.looses++;
+      }
+      else if ( player.choice == opponent.choice ) {
+      // else if (player.choice == opponent.choice && player.choice != "t") {
         $("#game-result").text("Ties!");
       }
       else if( (player.choice == "r" && opponent.choice == "s") ||
@@ -244,12 +318,10 @@ $("#player1").on("click", ".choice_btn", function(){
       player.choice = 0;
 
       db.ref(room_id+'/players/'+player.id).set(player);
-      // db.ref(room_id+'/players/'+player.id+'/choice').set(0);
-      // db.ref(room_id+'/players/'+player.id+'/wins').set(player.wins);
-      // db.ref(room_id+'/players/'+player.id+'/looses').set(player.looses);
 
-      setTimeout( drawMyChoiceButtons , SCORE_TIMEOUT );
+      setTimeout( drawChoiceButtons , SCORE_TIMEOUT );
       
+      choiceRef.off();
     }
   }, 
     function(error){
@@ -271,7 +343,7 @@ $("#btn-start").on("click", function(){
   game_started = 1;
 
   $("#start-form").hide();
-  $("#greeting").text("Hi "+player.name);
+  $("#greeting").text("Hello "+player.name);
 
   $("#p1name").text(player.name);
   $("#p1score").text("wins: "+player.wins+" | looses: "+player.looses);
@@ -307,7 +379,7 @@ $("#btn-start").on("click", function(){
                 opponent = chSnapshot.val();
                 console.log("=players: opponent found "+chSnapshot.val());
                 
-                drawMyChoiceButtons();
+                drawChoiceButtons();
 
                 //if player disconncted
                 var playerRef = db.ref(room_id+'/players/'+player.id);
@@ -332,7 +404,9 @@ $("#btn-start").on("click", function(){
 });
 
 
-// ============ chat ==============
+// ============ CHAT ==============
+
 $("#btn-send").on("click", function(){
+  event.preventDefault();
   //send chat 
 });

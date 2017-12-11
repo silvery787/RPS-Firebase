@@ -4,58 +4,78 @@
 	<title>Rock-Paper-Scissors</title>
 
 	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css">
+	<link href="https://fonts.googleapis.com/css?family=Noticia+Tex|Playfair+Display+SC" rel="stylesheet">
   	<link rel="stylesheet" type="text/css" href="assets/css/styles.css">
 
 </head>
 
-<div id="wrapper" class="container">
+<div id="wrapper">
+<div id="title" class="container"><h1>Fire - Water - Earth</h1></div>
 
-<div id="title"><h1>Rock-Paper-Scissors</h1></div>
-
-<div id="header">
+<div class="container">
+	
 	<form id="start-form">
-    	<div class="form-group">
-     		<!-- <label for="player-name">Your Name</label> -->
-     		<input class="form-control" id="player-name" type="text" placeholder="Name">
-    	</div>
-	    <button class="btn btn-primary" id="btn-start">START</button>
-  </form>
-
+		<div class="row">
+	    	<div class="col-10">
+	    		<div class="form-group">
+	     			<!-- <label for="player-name">Your Name</label> -->
+	     			<input class="form-control" id="player-name" type="text" placeholder="Name">
+	     		</div>
+	    	</div>
+	    	<div class="col-2">
+		    	<button class="btn btn-primary" id="btn-start">START</button>
+		    </div>
+		</div>
+  	</form>
   <div id="greeting"></div>
   <div id="game-info"></div>
 	
 </div>
 
 <div id="game-field" class="container">
-	<div class="row justify-content-center">
-		<div class="col-4">
+	<div class="row justify-content-center player-header">
+		<div class="col-5">
 			<div id="p1name"></div>
 			<div id="p1score"></div>
-			<div class="game-box" id="player1"></div>
+		</div>
+		<div class="col-4 offset-3">
+			<div id="p2name"></div>
+			<div id="p2score"></div>
+		</div>
+	</div>
+
+	<div class="row justify-content-center">
+		<div class="col-5">
+			<div class="game-box" id="player1">
+			</div>
 			
 		</div>
-		<div class="col-4">
+		<div class="col-3">
 			<div class="game-result" id="game-result"></div>
 		</div>
 		<div class="col-4">
-			<div id="p2name"></div>
-			<div id="p2score"></div>
 			<div class="game-box" id="player2"></div>
 		</div>
 	</div>
 </div>
 
-<div id="chat-field">
+<div id="chat-field" class="container">
 	<form>
 		<div class="form-group">
-			<input type="textarea" id="chat-history" name="chat" value="lalala" cols="50" rows="5" readonly>
+			<input type="textarea" id="chat-history" name="chat" cols="50" rows="10" readonly>
 		</div>
-    	<div class="form-group">
-     		<!-- <label for="msg-text">Your Message</label> -->
-     		<input class="form-control" id="msg-text" type="text">
-    	</div>
-	    <button class="btn btn-primary" id="btn-send" type="submit">Send</button>
-  </form>
+		<div class="row">
+			<div class="col-10">
+		    	<div class="form-group">
+		     		<!-- <label for="msg-text">Your Message</label> -->
+		     		<input class="form-control" id="msg-text" type="text">
+		    	</div>
+    		</div>
+    		<div class="col-2">
+	    		<button class="btn btn-primary" id="btn-send">SEND</button>
+	    	</div>
+		</div>
+  	</form>
 
 </div>
 

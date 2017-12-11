@@ -1,20 +1,56 @@
-input#player-name {
-	width: 500px;
+body {
+	color: #389be9;
+	font-family: 'Noticia+Tex', serif;
+}
+#wrapper {
+	background-color: black;
+	background-image: url('../images/fire-water_frame.jpg');
+	background-size: 100% 110%;
+	background-repeat: no-repeat;
+	background-position: center;
+	min-height: 100vh;
+	padding-top: 4vw;
+	border: 2px solid black;
 }
 
-div#header {
-	height: 120px;
-	border: 1px solid black;
+h1{
+	font-size: 80px;
+	color: #f05c2a;/*#ea7750;*/
+	text-align: center;
+	padding-top: 20px;
+	background-color: rgba(0,0,0, 0.5);
+	font-weight: bold;
+	-webkit-text-stroke: 1px black;
+	border-radius: 20px;
+	font-family: 'Playfair+Display+SC', serif;
+}
+
+div#greeting {
+	font-size: 50px;
+	text-align: center;
+	background-color: rgba(0,0,0, 0.5);
+	font-weight: bolder;
+	border-radius: 20px;
+
 } 
 
+.player-header{
+	height: 50px;
+	font-size: 20px;
+	line-height: 1;
+	font-weight: bold;
+}
+
 div#game-field {
-	height: 200px;
-	/*border: 1px solid black;*/
+	height: 25vh;
+	max-height: 300px;
+	min-height: 200px;
+	margin-bottom: 50px;
+	text-align: center;	
 }
 
 div#chat-field {
-	height: 200px;
-	border: 1px solid black;
+	/*padding-top: 50px;*/
 }
 
 div#chat {
@@ -22,25 +58,71 @@ div#chat {
 	height: 150px;
 	margin-right: auto;
 	margin-left: auto;
-
-	border: 1px solid black;
+	margin-top: 50px;
 }
 
 input#chat-history {
-	grid-row: 5;
-	grid-column: 50;
+	width: 100%;
+	border-radius: 5px;
+	height: 100px; 
+	padding: 15px;
 }
 
 .game-box {
-	width: 150px;
-	height: 150px;
+	width: 100%;
+	height: 22vh;
+	max-height: 250px;
+	min-height: 180px;
 	display: inline-block;
-	border: 1px solid black;
+	border: 1px solid #389be9;
+	border-radius: 10px;
 }
-.game-result {
-	width: 150px;
-	height: 200px;
-	display: inline-block;
-	border: 1px solid black;
+.game-box img {
+	max-width: 30%;
+	padding-top: 5px;
+	max-height: 96%;
+}
 
+.box-text {
+	padding-top: 50px;
+	font-size: 38px; 
 }
+
+.game-result {
+	color: #f05c2a;
+	/*color: #389be9;*/
+	height: 22vh;
+	max-height: 250px;
+	min-height: 180px;
+	text-align: center;
+	font-size: 3.5vw;
+	font-weight: bolder;
+	padding-top: 40px;
+	border: 1px solid #389be9;
+	border-radius: 50px;
+	line-height: 1;
+	/*background-image: url('../images/rpc-circle.png');*/
+	/*background-size: 100%;*/
+	/*background-repeat: no-repeat;*/
+	/*background-position: center;*/
+}
+
+#btn-start, #btn-send {
+	width: 100%;
+	/*background: url('../images/water-bg.jpg') 50% 100%;*/
+	font-weight: bolder;
+}
+
+input.form-control , input#chat-history{
+	color: white;
+	background : black;
+	border: 1px solid #389be9;
+}
+input.form-control:focus{
+	color: white;
+	background : black;
+	border: 1px solid #389be9;
+}
+
+
+

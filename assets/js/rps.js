@@ -1,5 +1,6 @@
-const SCORE_TIMEOUT = 5000;
-const MAX_TIMER = 5;
+const SCORE_TIMEOUT = 5000;// time for showing result
+const MAX_TIMER = 30; // time for choosing option
+const MAX_MSG_IN_CHAT = 7; //max messages to show in chat window
 
 var rps_images = {
   r : 'assets/images/earth.jpg', // rock=earth
@@ -39,6 +40,7 @@ var opponent = {
   choice : 0
 };
 
+var chat = [];
 
 var intervalId;
 var clockRunning = false;
@@ -177,20 +179,15 @@ function drawPlayersInfo(){
 }
 
 function getTextForChoice( choice ){
-  // switch(choice){
-  //   case 'r' : return "=Rock=";
-  //   case 'p' : return "=Paper=";
-  //   case 's' : return "=Scissors=";
-  //   case 't' : return "=No Answer=";
-  // }
+
   switch(choice){
     case 'r' : return "<img src='" + rps_images.r +"' alt='Earth (rock)'>";
     case 'p' : return "<img src='" + rps_images.p +"' alt='Fire (paper)'>";
     case 's' : return "<img src='" + rps_images.s +"' alt='Water (scissors)'>";
     // case 't' : return "<img src='" + rps_images.t +"' alt='Out of Time'>";
     case 't' : return "<p class='box-text'>Out of Time</p>";
-
   }
+
 }
 // =============================
 
@@ -217,7 +214,7 @@ function enterWaitList(){
         if(room_id) return false;
       });
 
-      console.log("Room = "+room_id);
+      //console.log("Room = "+room_id);
 
       if( room_id != 0 ){// if opponent was found
         //create new room
@@ -251,6 +248,14 @@ function processOpponentDisconnect(){
   
   db.ref(room_id+'/players/'+opponent.id).once('child_removed').then( function(event){
     
+    chat.push({
+      id : opponent.id,
+      name: opponent.name,
+      msg: 'disconnected'  
+    });
+    renderChat();
+    $("#btn-send").prop("disabled",true);
+
     db.ref(room_id).remove();
     player.choice = 0;
     opponent = {};
@@ -269,7 +274,7 @@ $("#player1").on("click", ".choice_btn", function(){
   game_timer.stop();
 
   player.choice = $(this).attr("data");
-  console.log("p1-choice: "+player.choice);
+
   //draw/show a picture of choice 
   $("#player1").empty();
   var p1text = getTextForChoice( player.choice );
@@ -358,28 +363,39 @@ $("#btn-start").on("click", function(){
   db.ref('waiting/'+player.id).on('value', function(snapshot) {
 
       //get opponents id, add yourself to the room
-      console.log("my waiting status changed : " + snapshot.val());
+      //console.log("my waiting status changed : " + snapshot.val());
 
       if(snapshot.val()){
 
-        // var player_obj = {};
-        // player_obj[player.id] = player;
         room_id = snapshot.val();
 
-        // db.ref(room_id+'/players').update(player_obj);
         db.ref(room_id+'/players/'+player.id).set(player);
 
         var query = db.ref(room_id+'/players');
         query.on("value", function(parSnapshot) {
           if(parSnapshot.exists() && parSnapshot.val()){
             parSnapshot.forEach(function(chSnapshot) {
-              console.log("=players snap: "+chSnapshot.key);
+              //console.log("=players snap: "+chSnapshot.key);
               var id = chSnapshot.key;
               if( id != player.id ){
                 opponent = chSnapshot.val();
-                console.log("=players: opponent found "+chSnapshot.val());
+                //console.log("=players: opponent found "+chSnapshot.val());
                 
                 drawChoiceButtons();
+
+                $("#btn-send").prop("disabled",false);
+                $("#msg-text").prop("disabled",false);
+
+                // add chat listener
+                db.ref(room_id+'/chat').limitToLast(1).on("child_added", function(snap){
+                  var plMsg = {
+                    id : snap.val().id,
+                    name : snap.val().name,
+                    msg : snap.val().msg
+                  };
+                  chat.push(plMsg);
+                  renderChat();
+                });
 
                 //if player disconncted
                 var playerRef = db.ref(room_id+'/players/'+player.id);
@@ -406,7 +422,56 @@ $("#btn-start").on("click", function(){
 
 // ============ CHAT ==============
 
+function renderChat(){
+
+  $("#chat-history").empty();
+
+  var class_name = ""
+  var msg_counter = 1;
+  for(var i = chat.length-1; i >= 0; i--){
+    
+    if( msg_counter > MAX_MSG_IN_CHAT) break;
+    msg_counter++;
+
+    if( chat[i].id == player.id ) 
+      class_name = "chat_player";
+    else
+      class_name = "chat_opponent";
+
+    var msg_div = $("<div>");
+    var name_span = $("<span>").attr("class", class_name);
+    var msg_html = "";
+
+    if(chat[i].msg == "disconnected"){
+      name_span.text( chat[i].name + " => ");
+    }
+    else{
+      name_span.text("["+chat[i].name+"]: ");
+    }
+    msg_div.html(chat[i].msg+"<br>");
+    msg_div.prepend(name_span);
+
+    $("#chat-history").prepend(msg_div);
+  }
+
+}
+
 $("#btn-send").on("click", function(){
   event.preventDefault();
-  //send chat 
+
+  var message = $("#msg-text").val();
+  $("#msg-text").val("");
+  if( room_id ){
+    db.ref(room_id+'/chat').push({
+      id : player.id,
+      name : player.name,
+      msg : message
+    });
+  }  
+
+});
+
+$(document).ready(function(){
+  $("#btn-send").prop("disabled",true);
+  $("#msg-text").prop("disabled",true);
 });

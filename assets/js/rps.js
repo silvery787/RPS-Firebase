@@ -461,7 +461,7 @@ $("#btn-send").on("click", function(){
 
   var message = $("#msg-text").val();
   $("#msg-text").val("");
-  if( room_id ){
+  if( room_id && message != "" ){
     db.ref(room_id+'/chat').push({
       id : player.id,
       name : player.name,
